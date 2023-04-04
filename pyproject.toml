@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Boilerplate for python machine learning project"
 authors = ["LI Tian <li_tian@singaporeair.com.sg>"]
 readme = "README.md"
-packages = [{include = "fastapi_celery_flower_docker_boilerplate"}]
+packages = [{include = "example"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -12,6 +12,7 @@ fastapi = "0.95.0"
 flower = "1.2.0"
 celery = "5.2.7"
 uvicorn = "0.21.1"
+python-dotenv = "1.0.0"
 
 [tool.poetry.dev-dependencies]
 watchdog = "3.0.0"

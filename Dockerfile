@@ -2,48 +2,57 @@
 # BASE IMAGE - BUILDERS
 # ---------------------------------------------------------------------------------------------------------------------#
 FROM python:3.9.10-slim as base-image
+#FROM --platform=linux/amd64 python:3.9.10-slim as base-image
 
-LABEL maintainer="LI Tian"
-
-ENV PYTHONUNBUFFERED 1 \  # output immediately without buffer, it's good for real time monitoring.
-    POETRY_VERSION=1.4.0 \  # poetry version
-    POETRY_VIRTUALENVS_CREATE=false \  # we are a container, so no need to create virtualenvs
+# output immediately without buffer, it's good for real time monitoring.
+# we are a container, so no need to create virtualenvs
+ENV PYTHONUNBUFFERED 1
 
 # install poetry
 # reference: https://python-poetry.org/docs/
 RUN apt-get update \
-    && apt install -y curl netcat \
-    && curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.poetry/bin:${PATH}"
+    && apt-get install -y --no-install-recommends curl netcat \
+    && curl -sSL https://install.python-poetry.org | python3 - \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y
+
+ENV POETRY_HOME /root/.local/bin
+ENV PATH="$POETRY_HOME/:$PATH"
+
 
 # install dependencies
-COPY pyproject.toml poetry.lock ./
+WORKDIR /app
+COPY . .
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # DEVELOPMENT IMAGE
 # ---------------------------------------------------------------------------------------------------------------------#
-FROM base-image as development
-ENV FASTAPI_ENV=development
+FROM base-image as dev
+ENV FASTAPI_ENV=dev
 
-WORKDIR /example
+WORKDIR /app
 
-# developer no need interaction wwith
-# developer is already at the bottom, so no need to use sudo
 RUN poetry install --no-root --no-interaction
 
+# Expose the port that the app will run on
+EXPOSE 8000
+
+# Start the application using Uvicorn
+WORKDIR example
+CMD ["poetry", "run", "uvicorn", "api:api", "--host", "0.0.0.0", "--port", "8000"]
 
 
-# ---------------------------------------------------------------------------------------------------------------------#
-# PRODUCTION IMAGE
-# ---------------------------------------------------------------------------------------------------------------------#
-FROM base-image as production
-ENV FASTAPI_ENV=production
-
-WORKDIR /example
-
-# production enviorment no need dev dependencies
-RUN poetry install --no-root --no-dev --no-interaction --no-dev
-
-# copy source code
-COPY /example .
+## ---------------------------------------------------------------------------------------------------------------------#
+## PRODUCTION IMAGE
+## ---------------------------------------------------------------------------------------------------------------------#
+#FROM base-image as production
+#ENV FASTAPI_ENV=production
+#
+#WORKDIR /example
+#
+## production enviorment no need dev dependencies
+#RUN poetry install --no-root --no-dev --no-interaction
+#
+## copy source code
+#COPY /example .
