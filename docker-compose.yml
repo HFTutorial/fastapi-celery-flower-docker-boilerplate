@@ -40,8 +40,42 @@ services:
     environment:
       CELERY_BROKER_URL: "amqp://guest:guest@broker:5672/"
       CELERY_RESULT_BACKEND: "rpc://"
-    command: "poetry run celery -A example.celery_worker.celery worker --loglevel=info"
     depends_on:
       - api
       - backend
+      - broker
+    command: "poetry run watchmedo \
+    auto-restart \
+    --directory . \
+    --recursive \
+    --pattern '*.py' \
+    -- celery -- -A example.celery_worker.celery worker -- --loglevel=info"
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: "flower"
+    volumes:
+      - .:/app
+    links:
+      - backend
+      - broker
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: "amqp://guest:guest@broker:5672"
+      CELERY_RESULT_BACKEND: "redis://backend:6379/0"
+    command: "poetry run watchmedo \
+    auto-restart \
+    --directory . \
+    --recursive \
+    --pattern '*.py' \
+    -- \
+    -- celery -- -A example.celery_worker.celery flower -- --loglevel=info"
+    depends_on:
+      - api
+      - backend
+      - celery_worker
       - broker
