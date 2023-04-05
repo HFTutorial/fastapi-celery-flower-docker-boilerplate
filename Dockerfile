@@ -39,8 +39,8 @@ RUN poetry install --no-root --no-interaction
 EXPOSE 8000
 
 # Start the application using Uvicorn
-WORKDIR example
-CMD ["poetry", "run", "uvicorn", "api:api", "--host", "0.0.0.0", "--port", "8000"]
+#WORKDIR example
+#CMD ["poetry", "run", "uvicorn", "api:api", "--host", "0.0.0.0", "--port", "8000"]
 
 
 ## ---------------------------------------------------------------------------------------------------------------------#
